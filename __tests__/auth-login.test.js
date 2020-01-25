@@ -4,8 +4,8 @@ const db = require("../database/dbConfig");
 const user_db = require("../auth/auth-model");
 
 beforeEach(async () => {
-   await db.migrate.rollback();
-   await db.migrate.latest();
+   await db("users").truncate();
+   
    await user_db.add({
       username: "Booris",
       password: "pass1234"

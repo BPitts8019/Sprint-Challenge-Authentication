@@ -3,8 +3,7 @@ const superTest = require("supertest");
 const db = require("../database/dbConfig");
 
 beforeEach(async () => {
-   await db.migrate.rollback();
-   await db.migrate.latest();
+   await db("users").truncate();
 });
 
 describe("Test /api/auth/register", () => {
@@ -49,7 +48,7 @@ describe("Test /api/auth/register", () => {
 
       expect(response.status).toBe(201);
       expect(response.type).toBe("application/json");
-      expect(response.body).toMatch({
+      expect(response.body).toEqual({
          id: 1,
          username: "Booris"
       });
