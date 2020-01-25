@@ -50,12 +50,10 @@ describe("Auth Endpoints", () => {
 
          expect(response.status).toBe(201);
          expect(response.type).toBe("application/json");
-         expect(response.body).objectContaining({
+         expect(response.body).toMatch({
             id: 1,
             username: "Booris"
          });
-         expect(response.body).toHaveProperty("token");
       });
-   
    });
 });
