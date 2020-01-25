@@ -13,6 +13,8 @@ beforeEach(async () => {
 });
 
 describe("Test /api/auth/login", () => {
+   const INVALID = "Invalid Username or password";
+
    test("Empty Object", async () => {
       const response = await superTest(server)
          .post("/api/auth/Login")
@@ -20,7 +22,7 @@ describe("Test /api/auth/login", () => {
 
       expect(response.status).toBe(400);
       expect(response.type).toBe("application/json");
-      expect(response.body.message).toBe("Please provide a username and password.");
+      expect(response.body.message).toBe(INVALID);
    });
    test("No Username", async () => {
       const response = await superTest(server)
@@ -31,7 +33,7 @@ describe("Test /api/auth/login", () => {
 
       expect(response.status).toBe(400);
       expect(response.type).toBe("application/json");
-      expect(response.body.message).toBe("Please provide a username and password.");
+      expect(response.body.message).toBe(INVALID);
    });
    test("No Password", async () => {
       const response = await superTest(server)
@@ -42,7 +44,7 @@ describe("Test /api/auth/login", () => {
 
       expect(response.status).toBe(400);
       expect(response.type).toBe("application/json");
-      expect(response.body.message).toBe("Please provide a username and password.");
+      expect(response.body.message).toBe(INVALID);
    });
    test("Good Data", async () => {
       const response = await superTest(server)
