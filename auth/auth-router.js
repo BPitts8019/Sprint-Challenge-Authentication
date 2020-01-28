@@ -29,14 +29,16 @@ router.post('/login', async (req, res) => {
    const {username, password} = req.body;
    if (!username || !password) {
       return res.status(400).json({
-         message: INVALID
+         message: "Please provide a username and password."
       });
    }
 
+
    try {
       //find the user
-      const user = await authModel.findBy({username});
-      
+      const user = await authModel.findBy({username}).first();
+      console.log(`User: ${JSON.stringify(user)}`);
+      console.log(`password: ${password}`);
       //validate user found and password
       if (!user || !bcrypt.compareSync(password, user.password)) {
          return res.status(403).json({
@@ -49,6 +51,7 @@ router.post('/login', async (req, res) => {
          message: `Welcome ${username}!`
       });
    } catch (error) {
+      console.error(error);
       return res.status(500).json({
          data: error.toString()
       });
