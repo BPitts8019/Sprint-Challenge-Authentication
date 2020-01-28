@@ -74,9 +74,9 @@ describe("Test /api/auth/login", () => {
 
       expect(response.status).toBe(200);
       expect(response.type).toBe("application/json");
-      // expect(response.body).toMatch({
-      //    token: expect.stringContaining("$2a$14$"),
-      //    message: "Welcome back Booris!"
-      // });
+      expect(response.body).toMatch({
+         token: expect.stringContaining("$2a$14$"),
+         message: "Welcome back Booris!"
+      });
    });
 });
