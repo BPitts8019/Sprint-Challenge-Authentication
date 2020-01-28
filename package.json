@@ -4,8 +4,9 @@
    "description": "Authentication Sprint Challenge",
    "main": "index.js",
    "scripts": {
-      "test": "cross-env DB_ENV=test jest --verbose --watch",
-      "server": "cross-env DB_ENV=development nodemon -r dotenv/config index.js"
+      "test": "jest --verbose --watch",
+      "testNoWatch": "jest --verbose --no-watchman",
+      "server": "nodemon -r dotenv/config index.js"
    },
    "repository": {
       "type": "git",
@@ -36,6 +37,7 @@
       "supertest": "^4.0.2"
    },
    "jest": {
-      "testEnvironment": "node"
+      "testEnvironment": "node",
+      "setupFiles": ["dotenv/config"]
    }
 }
