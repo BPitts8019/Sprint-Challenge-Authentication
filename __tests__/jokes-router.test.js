@@ -34,22 +34,18 @@ const register_user = (userData) => {
 // });
 
 describe("Test /api/jokes", () => {
-   test.only("No Authentication", async (done) => {
-      db.migrate.latest()
+   test.only("No Authentication", () => {
+      return db.migrate.latest()
          .then(res => db("users").truncate())
+
          .then(res => register_user(TEST_USER))
-         .then(regiser_res => {
-            return expect(regiser_res.status).toBe(status.CREATED);
-         })
+         .then(regiser_res => expect(regiser_res.status).toBe(status.CREATED))
+
          .then(res => superTest(server).get(url.JOKES))
          .then(jokes_res => {
             expect(jokes_res.status).toBe(status.UNAUTHENTICATED);
             expect(jokes_res.type).toBe(APP_JSON);
             expect(jokes_res.body.you).toBe(MSG_NOT_PASS);
-            done();
-         })
-         .catch(error => {
-            done(error);
          });
    });
 
