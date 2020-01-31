@@ -27,21 +27,30 @@ const register_user = (userData) => {
       .send(userData);
 }
 
-beforeEach(async () => {
-   await db.migrate.latest()
-   await db("users").truncate();
-});
+// beforeEach(async done => {
+//    await db.migrate.latest()
+//    await db("users").truncate();
+//    done();
+// });
 
 describe("Test /api/jokes", () => {
-   test("No Authentication", async () => {
-      const regiser_res = await register_user(TEST_USER);
-      expect(regiser_res.status).toBe(status.CREATED);
-
-      const response = await superTest(server)
-         .get(url.JOKES);
-      expect(response.status).toBe(status.UNAUTHENTICATED);
-      expect(response.type).toBe(APP_JSON);
-      expect(response.body.you).toBe(MSG_NOT_PASS);
+   test.only("No Authentication", async (done) => {
+      db.migrate.latest()
+         .then(res => db("users").truncate())
+         .then(res => register_user(TEST_USER))
+         .then(regiser_res => {
+            return expect(regiser_res.status).toBe(status.CREATED);
+         })
+         .then(res => superTest(server).get(url.JOKES))
+         .then(jokes_res => {
+            expect(jokes_res.status).toBe(status.UNAUTHENTICATED);
+            expect(jokes_res.type).toBe(APP_JSON);
+            expect(jokes_res.body.you).toBe(MSG_NOT_PASS);
+            done();
+         })
+         .catch(error => {
+            done(error);
+         });
    });
 
    test("Not Authenticated - Bad Token", async () => {
