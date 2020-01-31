@@ -18,6 +18,7 @@ router.post('/register', async (req, res) => {
       });
       res.status(201).json(stripPassword(newUser));
    } catch (error) {
+      console.error(`Error during registration: ${error.toString()}`)
       return res.status(500).json({
          data: error.toString()
       });
@@ -41,14 +42,14 @@ router.post('/login', async (req, res) => {
       console.log(`password: ${password}`);
       //validate user found and password
       if (!user || !bcrypt.compareSync(password, user.password)) {
-         return res.status(403).json({
+         return res.status(401).json({
             message: INVALID
          });
       }
 
       res.json({
          token: signToken(user),
-         message: `Welcome ${username}!`
+         message: `Welcome back ${username}!`
       });
    } catch (error) {
       console.error(error);
@@ -72,7 +73,7 @@ function signToken (user) {
    const payload = {id};
    const secret = process.env.JWT_SECRET;
    const options = {
-      expiresIn: "1h"
+      expiresIn: "24h"
    };
 
    return jwt.sign(payload, secret, options);

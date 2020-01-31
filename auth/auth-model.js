@@ -8,6 +8,7 @@ const findById = id => {
       .first();
 };
 const findBy = filter => {
+   console.log(`Looking for: ${JSON.stringify(filter)}`);
    return users_db()
       .where(filter);
 };

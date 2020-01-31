@@ -1,50 +1,80 @@
 const server = require("../api/server");
 const superTest = require("supertest");
-const users_db = require("../auth/auth-model");
+const db = require("../database/dbConfig");
 
-(async () => {
-   let user = users_db.findBy({username: "Booris Boons"}).first();
-   if (!user) {
-      user = await users_db.add({
-         username: "Booris Boons",
-         password: "pas1234"
-      });
-   }
-})();
+const url = {
+   LOGIN: "/api/auth/login",
+   JOKES: "/api/jokes"
+}
+const status = {
+   OK: 200,
+   CREATED: 201,
+   BAD_REQ: 400,
+   UNAUTHENTICATED: 401,
+   FORBIDDEN: 403
+};
+const AUTH_HEADER = "authorization";
+const APP_JSON = "application/json";
+const MSG_NOT_PASS = "shall not pass!";
+const TEST_USER = {
+   username: "Booris Boons",
+   password: "pas1234"
+};
+
+const register_user = (userData) => {
+   return superTest(server)
+      .post("/api/auth/register")
+      .send(userData);
+}
+
+beforeEach(async () => {
+   await db.migrate.latest()
+   await db("users").truncate();
+});
 
 describe("Test /api/jokes", () => {
-   const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNTgwMTc4OTUzLCJleHAiOjE1ODAxODI1NTN9.B4wFPxBYc1I1vg4mQ2Ks1F-3RMBXS4_g37I6mNdoazE";
-
    test("No Authentication", async () => {
-      const {token} = await superTest(server)
-         .post("/api/auth/login")
-         .send({
-            username: "Booris Boons",
-            password: "bad#password"
-         });
+      const regiser_res = await register_user(TEST_USER);
+      expect(regiser_res.status).toBe(status.CREATED);
 
       const response = await superTest(server)
-         .post("/api/jokes")
-         .set("authorization", token);
+         .get(url.JOKES);
+      expect(response.status).toBe(status.UNAUTHENTICATED);
+      expect(response.type).toBe(APP_JSON);
+      expect(response.body.you).toBe(MSG_NOT_PASS);
+   });
 
-      expect(response.status).toBe(401);
-      expect(response.type).toBe("application/json");
-      expect(response.body.you).toBe("shall not pass!");
+   test("Not Authenticated - Bad Token", async () => {
+      const BAD_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkJvb3JpcyBCb29ucyIsImV4dHJhLWRhdGEiOiJCQUQgVE9LRU4ifQ.xKIbtXlnD0udPtVcFPCuzALltQjrFFYlaL5jSRlziHk";
+
+      const regiser_res = await register_user(TEST_USER);
+      expect(regiser_res.status).toBe(status.CREATED);
+
+      const res = await superTest(server)
+         .get(url.JOKES)
+         .set(AUTH_HEADER, BAD_TOKEN);
+      expect(res.status).toBe(status.UNAUTHENTICATED);
+      expect(res.type).toBe(APP_JSON);
+      expect(res.body.you).toBe(MSG_NOT_PASS);
    });
 
    test("Authenticated", async () => {
-      const {token} = await superTest(server)
-         .post("/api/auth/login")
-         .send({
-            username: "Booris Boons",
-            password: "pas1234"
-         });
+      const regiser_res = await register_user(TEST_USER);
+      expect(regiser_res.status).toBe(status.CREATED);
 
-      const response = await superTest(server)
-         .post("/api/jokes")
-         .set("authorization", token);
+      //login with good credentials
+      const login_res = await superTest(server)
+         .post(url.LOGIN)
+         .send(TEST_USER);
+      expect(login_res.status).toBe(status.OK);
+      expect(login_res.body.token).toBeTruthy();
 
-      expect(response.status).toBe(200);
-      expect(response.type).toBe("application/json");
+      //test jokes endpoint
+      const jokes_res = await superTest(server)
+         .get(url.JOKES)
+         .set(AUTH_HEADER, login_res.body.token);
+      expect(jokes_res.status).toBe(status.OK);
+      expect(jokes_res.type).toBe(APP_JSON);
+      expect(jokes_res.body.length).toBeGreaterThanOrEqual(0);
    });
 });
