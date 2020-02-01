@@ -1,0 +1,32 @@
+const bcrypt = require("bcryptjs");
+const db = require("../database/dbConfig");
+const users_db = db.bind(db, "users");
+
+const findById = id => {
+   return users_db()
+      .where({id})
+      .first();
+};
+const findBy = filter => {
+   console.log(`Looking for: ${JSON.stringify(filter)}`);
+   return users_db()
+      .where(filter);
+};
+const add = async newUser => {
+   try {
+      newUser.password = bcrypt.hashSync(newUser.password, 14);
+      
+      const [id] = await users_db().insert(newUser);
+      console.log(`New password hash: ${newUser.password}`);
+      
+      return findById(id);
+   } catch (error) {
+      return Promise.reject(error);
+   }
+};
+
+module.exports = {
+   add,
+   findBy,
+   findById
+}
