@@ -15,9 +15,10 @@ const findBy = filter => {
 const add = async newUser => {
    try {
       newUser.password = bcrypt.hashSync(newUser.password, 14);
-      console.log(`New password hash: ${newUser.password}`);
-   
+      
       const [id] = await users_db().insert(newUser);
+      console.log(`New password hash: ${newUser.password}`);
+      
       return findById(id);
    } catch (error) {
       return Promise.reject(error);

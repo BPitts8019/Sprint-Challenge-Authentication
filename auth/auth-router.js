@@ -11,6 +11,11 @@ router.post('/register', async (req, res) => {
       });
    }
 
+   const isDupeUser = await authModel.findBy({username});
+   if (isDupeUser.length > 0) {
+      return res.status(400).json({message: `${username} already exists!`});
+   }
+
    try {
       const newUser = await authModel.add({
          username,
@@ -38,8 +43,6 @@ router.post('/login', async (req, res) => {
    try {
       //find the user
       const user = await authModel.findBy({username}).first();
-      console.log(`User: ${JSON.stringify(user)}`);
-      console.log(`password: ${password}`);
       //validate user found and password
       if (!user || !bcrypt.compareSync(password, user.password)) {
          return res.status(401).json({

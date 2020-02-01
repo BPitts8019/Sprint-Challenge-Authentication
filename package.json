@@ -6,7 +6,7 @@
    "scripts": {
       "test": "jest --verbose --watch",
       "testNoWatch": "jest --verbose",
-      "testLogHeap": "--expose-gc jest --runInBand --logHeapUsage",
+      "testAllInOne": "jest __tests__/all-in-one.test.js --verbose --watch",
       "server": "nodemon -r dotenv/config index.js"
    },
    "repository": {

@@ -3,7 +3,7 @@ const superTest = require("supertest");
 const jwt = require("jsonwebtoken");
 const db = require("../database/dbConfig");
 
-const APP_JSON = "application/json";
+
 const status = {
    OK: 200,
    CREATED: 201,
@@ -15,6 +15,8 @@ const TEST_USER = {
    username: "Booris Boons",
    password: "pas1234"
 };
+const APP_JSON = "application/json";
+const GIVE_NAME_PWD = "Please provide a username and password.";
 
 const register_user = (userData) => {
    return superTest(server)
@@ -32,30 +34,30 @@ const get_jokes = (token) => {
       .set("authorization", token);
 };
 
-afterAll(async () => {
-   console.log("afterAll - outside");
+beforeAll(async () => {
    await db("users").truncate();
 });
 
 describe("Test /api/auth/register", () => {
-   const GIVE_NAME_PWD = "Please provide a username and password.";
-
-   beforeEach(async () => {
-      console.log("beforeEach - inside describe");
-      await db.migrate.latest();
-      await db("users").truncate();
-   });
-
-   test("No Username", async () => {
+   test("Status Code 400 when no username is provided", async () => {
       const response = await register_user({
-         password: TEST_USER.password
+         password: "No Username"
       });
       expect(response.status).toBe(status.BAD_REQ);
       expect(response.type).toBe(APP_JSON);
       expect(response.body.message).toBe(GIVE_NAME_PWD);
    });
 
-   test("Good Data", async () => {
+   test("Status Code 400 when no password is provided", async () => {
+      const response = await register_user({
+         username: "No Password"
+      });
+      expect(response.status).toBe(status.BAD_REQ);
+      expect(response.type).toBe(APP_JSON);
+      expect(response.body.message).toBe(GIVE_NAME_PWD);
+   });
+
+   test("Status Code 201 with good data", async () => {
       const response = await register_user(TEST_USER);
       expect(response.status).toBe(status.CREATED);
       expect(response.type).toBe(APP_JSON);
@@ -64,46 +66,66 @@ describe("Test /api/auth/register", () => {
          username: TEST_USER.username
       });
    });
+
+   test("Status Code 400 when user already exists", async () => {
+      const response = await register_user(TEST_USER);
+      expect(response.status).toBe(status.BAD_REQ);
+      expect(response.type).toBe(APP_JSON);
+      expect(response.body.message).toBe(`${TEST_USER.username} already exists!`);
+   });
 });
 
-// describe("Test /api/auth/login", () => {
-//    const MSG_INVALID = "Invalid Username or password";
+describe("Test /api/auth/login", () => {
+   test("Status Code 400 when no username is provided", async () => {
+      const response = await login_user({
+         password: "No Username"
+      });
+      expect(response.status).toBe(status.BAD_REQ);
+      expect(response.type).toBe(APP_JSON);
+      expect(response.body.message).toBe(GIVE_NAME_PWD);
+   });
 
-//    beforeAll(async () => {
-//       await register_user(TEST_USER);
-//    });
+   test("Status Code 400 when no password is provided", async () => {
+      const response = await login_user({
+         username: "No Password"
+      });
+      expect(response.status).toBe(status.BAD_REQ);
+      expect(response.type).toBe(APP_JSON);
+      expect(response.body.message).toBe(GIVE_NAME_PWD);
+   });
 
-//    test("Bad Password", async () => {
-//       const login_res = await login_user({
-//          username: TEST_USER.username,
-//          password: "bad#password"
-//       });
-//       expect(login_res.status).toBe(status.UNAUTHENTICATED);
-//       expect(login_res.type).toBe(APP_JSON);
-//       expect(login_res.body.message).toBe(MSG_INVALID);
-//    });
-//    test("Good Data", async () => {
-//       const login_res = await login_user(TEST_USER);
-//       expect(login_res.status).toBe(status.OK);
-//       expect(login_res.type).toBe(APP_JSON);
-//       expect(login_res.body.message).toBe(`Welcome back ${TEST_USER.username}!`);
+   test("Status Code 401 with a bad password", async () => {
+      const login_res = await login_user({
+         ...TEST_USER,
+         password: "bad#password"
+      });
+      expect(login_res.status).toBe(status.UNAUTHENTICATED);
+      expect(login_res.type).toBe(APP_JSON);
+      expect(login_res.body.message).toBe("Invalid Username or password");
+   });
 
-//       const isValidToken = new Promise((resolve, reject) => {
-//          jwt.verify(
-//             login_res.body.token, 
-//             process.env.JWT_SECRET, 
-//             (error, payload) => {
-//                if (error) {
-//                   resolve(false);
-//                } else {
-//                   resolve(true);
-//                }
-//             }
-//          );
-//       });
-//       return expect(isValidToken).resolves.toBe(true);
-//    });
-// });
+   test("Status Code 200 and a valid token with good credentials", async () => {
+      const login_res = await login_user(TEST_USER);
+      expect(login_res.status).toBe(status.OK);
+      expect(login_res.type).toBe(APP_JSON);
+      expect(login_res.body.message).toBe(`Welcome back ${TEST_USER.username}!`);
+
+      const isValidToken = new Promise((resolve, reject) => {
+         jwt.verify(
+            login_res.body.token, 
+            process.env.JWT_SECRET, 
+            (error, payload) => {
+               if (error) {
+                  resolve(false);
+               } else {
+                  resolve(true);
+               }
+            }
+         );
+      });
+      await expect(isValidToken).resolves.toBe(true);
+   });
+});
 
 // describe("Test /api/jokes", () => {
 //    const AUTH_HEADER = "";
